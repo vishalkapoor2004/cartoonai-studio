@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CartoonAI Studio</title>
+<style>
+:root{--bg:#0b1020;--panel:#141c31;--line:#293653;--text:#eef3ff;--muted:#9aa9c6;--accent:#8b5cf6;--accent2:#22d3ee}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#1b2550,#0b1020 55%);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:20px max(16px,calc((100% - 1150px)/2));border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;background:#0b1020cc;position:sticky;top:0;z-index:2}
+.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#8b5cf6,#22d3ee);display:grid;place-items:center;font-size:23px}
+h1{font-size:20px;margin:0}header p{margin:2px 0 0;color:var(--muted);font-size:12px}.pill{margin-left:auto;border:1px solid #3b4770;border-radius:99px;padding:7px 11px;font-size:12px;color:#b9c5ff}
+main{max-width:1150px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns: minmax(0,1fr) minmax(300px,.9fr);gap:18px}
+.panel{background:#121a2eec;border:1px solid var(--line);border-radius:18px;padding:18px;min-width:0;box-shadow:0 12px 40px #0002}
+h2{font-size:16px;margin:0 0 12px}.hint{color:var(--muted);font-size:12px;line-height:1.55}
+textarea,input,select{width:100%;background:#0b1224;border:1px solid #34415f;border-radius:10px;color:var(--text);padding:11px;font:inherit;outline:none}textarea{min-height:130px;resize:vertical}label{display:block;font-size:12px;color:#bac7e4;margin:14px 0 6px}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border:0;border-radius:11px;padding:11px 14px;font-weight:700;cursor:pointer;color:white;background:linear-gradient(110deg,#7c3aed,#4f46e5)}.btn.secondary{background:#202b45;border:1px solid #354362}.btn.teal{background:linear-gradient(110deg,#0891b2,#0e7490)}.btn:disabled{opacity:.45;cursor:not-allowed}.buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.preview{width:100%;display:block;border-radius:13px;background:#080d19;border:1px solid #34415f;aspect-ratio:9/16;max-height:480px;object-fit:contain}
+.scene-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;max-height:260px;overflow:auto}.scene{display:flex;gap:10px;align-items:center;padding:10px;background:#0d1427;border:1px solid #263452;border-radius:11px;cursor:pointer}.scene.active{border-color:#8b5cf6;background:#21183c}.thumb{width:52px;height:62px;border-radius:7px;background:linear-gradient(#60a5fa,#fef3c7);flex-shrink:0;display:grid;place-items:center;font-size:23px}.scene strong{font-size:12px}.scene small{display:block;color:var(--muted);margin-top:4px;line-height:1.35}
+.notice{margin-top:12px;padding:11px;border-radius:10px;background:#15243a;border:1px solid #2d4563;color:#b9d8f6;font-size:12px;line-height:1.5}
+footer{max-width:1150px;margin:0 auto 30px;padding:0 16px;color:var(--muted);font-size:12px}
+@media(max-width:780px){main{grid-template-columns:1fr;margin-top:14px}.preview{max-height:440px}header{padding:14px 16px}.pill{font-size:10px}}
+</style>
+</head>
+<body>
+<header><div class="logo">🎬</div><div><h1>CartoonAI Studio</h1><p>Story → scenes → cartoon-style video</p></div><div class="pill">FREE STARTER · BETA</div></header>
+<main>
+<section class="panel">
+<h2>✍️ 1. Create your story</h2>
+<p class="hint">Write a Hindi or English story. We'll split it into scenes and create a stylized cartoon storyboard. This starter runs in your browser without an API key.</p>
+<label for="story">Your story</label>
+<textarea id="story">एक गरीब आदमी को जादुई चिराग मिलता है। जिन्न बाहर आता है और कहता है, "तीन इच्छाएँ माँगो!" आदमी ₹1 करोड़, बड़ा घर और लग्जरी कार माँगता है। जिन्न बोलता है, "पहले मेरी UPI पेमेंट कर!" आखिर में पता चलता है कि जिन्न खुद गरीब है।</textarea>
+<div class="controls">
+<div><label for="format">Video format</label><select id="format"><option value="portrait">YouTube Shorts · 9:16</option><option value="landscape">YouTube · 16:9</option><option value="square">Square · 1:1</option></select></div>
+<div><label for="duration">Seconds per scene</label><select id="duration"><option>3</option><option selected>5</option><option>8</option><option>10</option></select></div>
+</div>
+<label for="title">Video title</label><input id="title" value="जादुई चिराग और गरीब जिन्न 😂">
+<div class="buttons"><button class="btn" id="make">✨ Make storyboard</button><button class="btn secondary" id="sample">Reset sample</button></div>
+<div class="notice">Free mode uses procedural cartoon illustrations (not a cloud AI video model). You can upload your own generated images per scene below to improve the visuals.</div>
+<h2 style="margin-top:22px">🧩 2. Scenes</h2>
+<div class="scene-list" id="sceneList"></div>
+</section>
+<section class="panel">
+<h2>🎞️ Preview & export</h2>
+<canvas id="preview" class="preview" width="540" height="960"></canvas>
+<div class="controls">
+<div><label for="sceneText">Selected scene caption</label><input id="sceneText" placeholder="Scene caption"></div>
+<div><label for="imageUpload">Replace scene art</label><input id="imageUpload" type="file" accept="image/*"></div>
+</div>
+<div class="buttons">
+<button class="btn secondary" id="prev">← Previous</button><button class="btn secondary" id="next">Next →</button><button class="btn teal" id="play">▶ Play preview</button>
+</div>
+<div class="buttons"><button class="btn" id="export">⬇ Export MP4 (WebM)</button><button class="btn secondary" id="voice">🔊 Speak captions</button></div>
+<p class="hint" id="status" aria-live="polite">Ready. Create a storyboard to begin.</p>
+<div class="notice"><b>Export note:</b> Browser export creates a WebM video with animated scenes, captions, and a simple synthesized background tone. Some editors accept WebM directly; convert to MP4 with a free converter or FFmpeg if needed. Spoken narration is played separately because browser speech synthesis cannot reliably be embedded in the recording.</div>
+</section>
+</main>
+<footer>Prototype v0.1 · Your story stays in this browser tab. No account, API key, or server required. Keep this page open during export.</footer>
+<script>
+const $=id=>document.getElementById(id);
+const sample=$('story').value;
+let scenes=[], selected=0, uploaded={}, playing=false, raf=0;
+const canvas=$('preview'), ctx=canvas.getContext('2d');
+function splitStory(s){
+ let parts=s.replace(/\n+/g,' ').split(/(?<=[।.!?])\s+/).map(x=>x.trim()).filter(Boolean);
+ if(parts.length<2){parts=s.split(/[।.!?]+/).map(x=>x.trim()).filter(Boolean)}
+ if(!parts.length)parts=['एक मज़ेदार कहानी शुरू होती है।'];
+ return parts.slice(0,24).map((text,i)=>({text, title:'Scene '+(i+1), art:null, seed:i}));
+}
+function resizeCanvas(){
+ const f=$('format').value;
+ if(f==='landscape'){canvas.width=960;canvas.height=540}
+ else if(f==='square'){canvas.width=720;canvas.height=720}
+ else {canvas.width=540;canvas.height=960}
+ draw();
+}
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function draw(){
+ const w=canvas.width,h=canvas.height, sc=scenes[selected];
+ if(!sc){ctx.fillStyle='#10172b';ctx.fillRect(0,0,w,h);ctx.fillStyle='white';ctx.textAlign='center';ctx.font='bold 28px sans-serif';ctx.fillText('Your cartoon preview',w/2,h/2);return}
+ if(uploaded[selected]){
+   ctx.drawImage(uploaded[selected],0,0,w,h);
+ } else {
+   const grad=ctx.createLinearGradient(0,0,0,h);grad.addColorStop(0,['#7dd3fc','#c4b5fd','#f9a8d4','#86efac'][selected%4]);grad.addColorStop(1,['#fef3c7','#dbeafe','#fde68a','#bbf7d0'][selected%4]);ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
+   // sun and clouds
+   ctx.fillStyle='#fff6c7';ctx.beginPath();ctx.arc(w*.8,h*.14,Math.min(w,h)*.07,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle='#ffffffa8';for(let i=0;i<3;i++){let x=w*(.15+i*.3),y=h*(.19+(i%2)*.04);ctx.beginPath();ctx.arc(x,y,Math.min(w,h)*.035,0,Math.PI*2);ctx.arc(x+24,y-10,Math.min(w,h)*.045,0,Math.PI*2);ctx.arc(x+48,y,Math.min(w,h)*.03,0,Math.PI*2);ctx.fill()}
+   // ground
+   ctx.fillStyle='#4d9b65';ctx.beginPath();ctx.ellipse(w*.5,h*.82,w*.72,h*.16,0,0,Math.PI*2);ctx.fill();
+   // stylized character
+   const cx=w*(.35+(selected%3)*.15), cy=h*.55, r=Math.min(w,h)*.105;
+   ctx.fillStyle=['#7c3aed','#ea580c','#0f766e','#be123c'][selected%4];ctx.beginPath();ctx.roundRect(cx-r*.65,cy+r*.5,r*1.3,r*1.7,r*.35);ctx.fill();
+   ctx.fillStyle='#f5c7a6';ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle='#33251f';ctx.beginPath();ctx.arc(cx-r*.38,cy-r*.58,r*.28,Math.PI,0);ctx.arc(cx+r*.12,cy-r*.66,r*.32,Math.PI,0);ctx.fill();
+   ctx.fillStyle='#292524';ctx.beginPath();ctx.arc(cx-r*.32,cy,r*.07,0,Math.PI*2);ctx.arc(cx+r*.32,cy,r*.07,0,Math.PI*2);ctx.fill();
+   ctx.strokeStyle='#9a3412';ctx.lineWidth=Math.max(2,r*.05);ctx.beginPath();ctx.arc(cx,cy+r*.17,r*.23,.15,Math.PI-.15);ctx.stroke();
+   // magic lamp on selected scenes
+   if(/चिराग|जिन्न|magic|lamp|wish|upi|कार|car/i.test(sc.text)){
+     const lx=w*.7,ly=h*.66;ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.ellipse(lx,ly,r*.65,r*.3,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(lx-r*.42,ly-r*.03,r*.22,Math.PI*.5,Math.PI*1.5);ctx.strokeStyle='#f59e0b';ctx.lineWidth=r*.14;ctx.stroke();
+     ctx.fillStyle='#fef3c7';ctx.font=`bold ${Math.max(18,w*.035)}px sans-serif`;ctx.fillText('✦',lx,ly-r*.7);ctx.fillText('✧',lx+r*.5,ly-r*.5);
+   }
+ }
+ // dark lower caption plate
+ const caption=(sc.text||'').trim(), maxWidth=w*.84, fontSize=Math.max(17,Math.min(w*.052,34));
+ ctx.fillStyle='#07101ee0';ctx.beginPath();ctx.roundRect(w*.06,h*.78,w*.88,h*.16,18);ctx.fill();
+ ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`bold ${fontSize}px system-ui,sans-serif`;
+ const words=caption.split(/\s+/), lines=[];let line='';
+ for(const word of words){const test=line?line+' '+word:word;if(ctx.measureText(test).width>maxWidth*.92&&line){lines.push(line);line=word}else line=test}
+ if(line)lines.push(line);const maxLines=3, shown=lines.slice(0,maxLines);
+ shown.forEach((ln,i)=>ctx.fillText(ln,w/2,h*.81+(i+.5)*(fontSize*1.15),maxWidth));
+ ctx.textBaseline='alphabetic';ctx.fillStyle='#ffffffb8';ctx.font=`${Math.max(12,w*.025)}px system-ui`;ctx.fillText('CartoonAI Studio',w/2,h*.97);
+}
+function renderList(){
+ const list=$('sceneList');list.innerHTML='';
+ scenes.forEach((s,i)=>{const el=document.createElement('div');el.className='scene'+(i===selected?' active':'');el.innerHTML=`<div class="thumb">${i%3===0?'🎭':i%3===1?'✨':'😂'}</div><div><strong>${i+1}. ${esc(s.title)}</strong><small>${esc(s.text.slice(0,100))}</small></div>`;el.onclick=()=>choose(i);list.appendChild(el)});
+ $('sceneText').value=scenes[selected]?.text||'';draw();
+}
+function choose(i){selected=Math.max(0,Math.min(scenes.length-1,i));renderList()}
+function make(){scenes=splitStory($('story').value);selected=0;uploaded={};resizeCanvas();renderList();$('status').textContent=`Created ${scenes.length} scenes. Select a scene to edit its caption or replace its art.`}
+$('make').onclick=make;$('sample').onclick=()=>{$('story').value=sample;$('title').value='जादुई चिराग और गरीब जिन्न 😂';make()};
+$('format').onchange=resizeCanvas;$('prev').onclick=()=>choose(selected-1);$('next').onclick=()=>choose(selected+1);
+$('sceneText').onchange=()=>{if(scenes[selected]){scenes[selected].text=$('sceneText').value;renderList()}};
+$('imageUpload').onchange=e=>{const file=e.target.files[0];if(!file)return;const img=new Image();img.onload=()=>{uploaded[selected]=img;draw();$('status').textContent='Custom scene image loaded.'};img.src=URL.createObjectURL(file)};
+$('play').onclick=async()=>{if(playing){playing=false;cancelAnimationFrame(raf);$('play').textContent='▶ Play preview';return}if(!scenes.length)make();playing=true;$('play').textContent='Ⅱ Stop preview';let i=selected;const step=()=>{if(!playing)return;choose(i);i=(i+1)%scenes.length;setTimeout(()=>{if(playing)raf=requestAnimationFrame(step)},Number($('duration').value)*1000)};step()};
+$('voice').onclick=()=>{if(!scenes.length)make();if(!('speechSynthesis'in window)){ $('status').textContent='Speech synthesis is not supported in this browser.';return}speechSynthesis.cancel();let i=0;const speakNext=()=>{if(i>=scenes.length)return;const u=new SpeechSynthesisUtterance(scenes[i++].text);u.lang=/[अ-ह]/.test(u.text)?'hi-IN':'en-US';u.rate=0.95;u.onend=speakNext;speechSynthesis.speak(u)};speakNext();$('status').textContent='Reading scene captions aloud. Audio is playback only, not embedded in exported video.'};
+$('export').onclick=async()=>{
+ if(!scenes.length)make();
+ if(!canvas.captureStream||!window.MediaRecorder){$('status').textContent='This browser does not support video recording. Try latest Chrome.';return}
+ playing=false;cancelAnimationFrame(raf);$('play').textContent='▶ Play preview';
+ const stream=canvas.captureStream(24);let audioCtx,osc,gain,audioStream;
+ try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();osc=audioCtx.createOscillator();gain=audioCtx.createGain();osc.type='sine';osc.frequency.value=174;gain.gain.value=0.012;osc.connect(gain);const dest=audioCtx.createMediaStreamDestination();gain.connect(dest);osc.start();audioStream=dest.stream;audioStream.getAudioTracks().forEach(t=>stream.addTrack(t))}catch(e){}
+ let mime='video/webm;codecs=vp9,opus';if(!MediaRecorder.isTypeSupported(mime))mime='video/webm';
+ const rec=new MediaRecorder(stream,{mimeType:mime}),chunks=[];rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+ rec.onstop=()=>{const blob=new Blob(chunks,{type:'video/webm'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=(($('title').value||'cartoonai-video').replace(/[^\p{L}\p{N}-]+/gu,'-').slice(0,60)||'cartoonai-video')+'.webm';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);stream.getTracks().forEach(t=>t.stop());if(osc)osc.stop();if(audioCtx)audioCtx.close();$('status').textContent='Export complete. Downloaded a WebM video.'};
+ rec.start();let idx=0;const per=Number($('duration').value)*1000;const start=performance.now();
+ function frame(now){if(idx<scenes.length){selected=idx;draw();$('status').textContent=`Exporting scene ${idx+1} of ${scenes.length}…`;if(now-start >= (idx+1)*per){idx++}requestAnimationFrame(frame)}else{setTimeout(()=>rec.stop(),400)}}
+ selected=0;draw();requestAnimationFrame(frame);
+};
+make();
+</script>
+</body></html>
